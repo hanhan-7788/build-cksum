@@ -1,0 +1,24 @@
+name: Build Static cksum
+on: [workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools wget xz-utils make
+
+      - name: Download and build coreutils
+        run: |
+          wget https://ftp.gnu.org/gnu/coreutils/coreutils-9.5.tar.xz
+          tar -xf coreutils-9.5.tar.xz
+          cd coreutils-9.5
+          CC=musl-gcc ./configure FORCE_UNSAFE_CONFIGURE=1 LDFLAGS="-static"
+          make -j$(nproc) src/cksum
+          cp src/cksum ../fast_cksum
+
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: fast_cksum
+          path: fast_cksum
